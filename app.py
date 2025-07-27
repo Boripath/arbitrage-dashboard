@@ -13,6 +13,7 @@ st.markdown("---")
 st.sidebar.header("⚙️ Settings")
 assets = st.sidebar.multiselect("Select Assets", ["BTC", "ETH"], default=["BTC", "ETH"])
 show_apy_type = st.sidebar.radio("APY Display", ["Daily", "Annualized", "Both"], index=2)
+exchange_list = st.sidebar.multiselect("Exchanges", ["Deribit", "Binance", "Bybit"], default=["Deribit"])
 
 # Fetch data
 st.subheader("🔄 Fetching Price Data")
