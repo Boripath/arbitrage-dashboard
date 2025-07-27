@@ -3,7 +3,12 @@ import pandas as pd
 from datetime import datetime
 
 def fetch_data(assets=["BTC", "ETH"]):
-    base_url = "https://www.deribit.com/api/v2/public/get_instruments"
+    url = "https://www.deribit.com/api/v2/public/get_instruments"
+    params = {
+        "currency": "BTC",
+        "kind": "future",
+        "expired": "false"  # ต้องใช้ "false" เป็น string เล็ก
+    }
     result = []
 
     for asset in assets:
