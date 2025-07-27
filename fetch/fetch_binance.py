@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 
-def fetch_data(assets=["BTC", "ETH"]):
+def fetch_binance(assets=["BTC", "ETH"]):
     data = []
     now = datetime.utcnow()
 
