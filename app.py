@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from fetch import fetch_deribit, fetch_binance, fetch_bybit
-from utils.calculate_apy import calculate_apy_and_zscore
+from utils import calculate_apy
 from datetime import datetime
 import os
 
@@ -40,7 +40,7 @@ if data_frames:
     combined_df = pd.concat(data_frames, ignore_index=True)
 
     # Calculate APY + Z-score
-    result_df = calculate_apy_and_zscore(combined_df)
+    result_df = calculate_apy(combined_df)
 
     # Filter columns for display
     columns = ["source", "asset", "type", "expiry", "price", "spot_price", "spread", "days_to_expiry", "apy_daily", "apy_annual", "zscore"]
@@ -57,12 +57,16 @@ if data_frames:
         st.dataframe(result_df[["source", "asset", "type", "expiry", "spread", "apy_annual", "zscore"]])
     else:
         st.dataframe(result_df[["source", "asset", "type", "expiry", "spread", "apy_daily", "apy_annual", "zscore"]])
-
+    
+    # Z-score bar chart
+    st.subheader("📊 Z-Score Distribution")
+    st.bar_chart(result_df.set_index("asset")["zscore"])
+    
     # Export CSV
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    os.makedirs("data", exist_ok=True)
     csv_path = f"data/arbitrage_{timestamp}.csv"
     result_df.to_csv(csv_path, index=False)
     st.success(f"📁 Saved data to: {csv_path}")
 else:
     st.warning("⚠️ No data available. Please check your connection or API access.")
-
