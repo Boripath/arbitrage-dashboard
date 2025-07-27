@@ -22,11 +22,7 @@ st.write("This may take a few seconds...")
 data_frames = []
 for source_name, fetch_fn in zip([
     "Deribit", "Binance", "Bybit"
-], [
-    fetch_deribit.fetch_data,
-    fetch_binance.fetch_data,
-    fetch_bybit.fetch_data
-]):
+], [fetch_deribit, fetch_binance, fetch_bybit] ):
     try:
         df = fetch_fn(assets=assets)
         df['source'] = source_name
