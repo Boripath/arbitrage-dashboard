@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 from datetime import datetime
 
-def fetch_deribit(assets=["BTC", "ETH"]):
+def fetch_data(assets=["BTC", "ETH"]):
     base_url = "https://www.deribit.com/api/v2/public/get_instruments"
     result = []
 
