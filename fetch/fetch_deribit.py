@@ -2,53 +2,46 @@ import requests
 import pandas as pd
 from datetime import datetime
 
+BASE_URL = "https://www.deribit.com/api/v2/public/get_instruments"
+TICKER_URL = "https://www.deribit.com/api/v2/public/ticker"
+
+
 def fetch_data(assets=["BTC", "ETH"]):
-    url = "https://www.deribit.com/api/v2/public/get_instruments"
-    params = {
-        "currency": "BTC",
-        "kind": "future",
-        "expired": "false"  # ต้องใช้ "false" เป็น string เล็ก
-    }
     result = []
+    now = datetime.utcnow()
 
     for asset in assets:
-        for kind in ["future", "perpetual"]:
-            params = {
+        try:
+            # 1. Get Futures Instruments (non-expired)
+            instruments_resp = requests.get(BASE_URL, params={
                 "currency": asset,
-                "kind": kind,
-                "expired": False
-            }
-            response = requests.get(base_url, params=params)
-            response.raise_for_status()
-            instruments = response.json()["result"]
+                "kind": "future",
+                "expired": "false"  # must be string lowercase
+            }, timeout=10)
+            instruments_resp.raise_for_status()
+            instruments = instruments_resp.json()["result"]
 
             for inst in instruments:
                 instrument_name = inst["instrument_name"]
-                type_ = inst["instrument_type"]
-                expiry = inst.get("expiration_timestamp")
-                if expiry:
-                    expiry = datetime.utcfromtimestamp(expiry / 1000).strftime("%Y-%m-%d")
-                else:
-                    expiry = "perpetual"
+                expiry_ts = inst["expiration_timestamp"] // 1000
+                expiry = datetime.utcfromtimestamp(expiry_ts)
+                days_to_expiry = (expiry - now).days
 
-                # Get mark price
-                mark_resp = requests.get("https://www.deribit.com/api/v2/public/get_book_summary_by_instrument", params={"instrument_name": instrument_name})
-                mark_resp.raise_for_status()
-                mark_price = mark_resp.json()["result"][0]["mark_price"]
-
-                # Get spot price (using perpetual if available)
-                spot_instrument = f"{asset}-PERPETUAL"
-                spot_resp = requests.get("https://www.deribit.com/api/v2/public/get_book_summary_by_instrument", params={"instrument_name": spot_instrument})
-                spot_resp.raise_for_status()
-                spot_price = spot_resp.json()["result"][0]["mark_price"]
+                # 2. Get Mark Price
+                ticker_resp = requests.get(TICKER_URL, params={"instrument_name": instrument_name}, timeout=10)
+                ticker_resp.raise_for_status()
+                mark_price = ticker_resp.json()["result"]["mark_price"]
+                index_price = ticker_resp.json()["result"].get("index_price")
 
                 result.append({
                     "asset": asset,
-                    "type": type_,
-                    "expiry": expiry,
+                    "type": "futures",
+                    "expiry": expiry.strftime("%Y-%m-%d"),
                     "price": mark_price,
-                    "spot_price": spot_price
+                    "spot_price": index_price,
                 })
 
-    return pd.DataFrame(result)
+        except Exception as e:
+            raise RuntimeError(f"Deribit failed for {asset}: {e}")
 
+    return pd.DataFrame(result)
