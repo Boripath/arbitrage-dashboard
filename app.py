@@ -51,7 +51,7 @@ if data_frames:
     result_df = calculate_apy(combined_df)
 
     # Filter columns for display
-    columns = ["source", "asset", "type", "expiry", "price", "spot_price", "spread", "days_to_expiry", "apy_daily", "apy_annual", "zscore"]
+    columns = ["Exchange", "asset", "type", "expiry", "price", "spot_price", "spread", "days_to_expiry", "apy_daily", "apy_annual", "zscore"]
     result_df = result_df[columns]
 
     # Sort by zscore descending
@@ -60,11 +60,11 @@ if data_frames:
     # Display table
     st.subheader("📈 Arbitrage Opportunities")
     if show_apy_type == "Daily":
-        st.dataframe(result_df[["source", "asset", "type", "expiry", "spread", "apy_daily", "zscore"]])
+        st.dataframe(result_df[["Exchange", "asset", "type", "expiry", "days_to_expiry", "spread", "apy_daily", "zscore"]])
     elif show_apy_type == "Annualized":
-        st.dataframe(result_df[["source", "asset", "type", "expiry", "spread", "apy_annual", "zscore"]])
+        st.dataframe(result_df[["Exchange", "asset", "type", "expiry", "days_to_expiry", "spread", "apy_annual", "zscore"]])
     else:
-        st.dataframe(result_df[["source", "asset", "type", "expiry", "spread", "apy_daily", "apy_annual", "zscore"]])
+        st.dataframe(result_df[["Exchange", "asset", "type", "expiry", "days_to_expiry", "spread", "apy_daily", "apy_annual", "zscore"]])
     
     # Z-score bar chart
     st.subheader("📊 Z-Score Distribution")
