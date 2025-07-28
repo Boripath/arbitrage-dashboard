@@ -13,17 +13,28 @@ st.markdown("---")
 st.sidebar.header("⚙️ Settings")
 assets = st.sidebar.multiselect("Select Assets", ["BTC", "ETH"], default=["BTC", "ETH"])
 show_apy_type = st.sidebar.radio("APY Display", ["Daily", "Annualized", "Both"], index=2)
-exchange_list = st.sidebar.multiselect("Exchanges", ["Deribit", "Binance", "Bybit"], default=["Deribit"])
 
-# Fetch data
+# ✅ Exchange Selector (default = Deribit only)
+st.sidebar.markdown("### 📍 Select Exchanges")
+use_deribit = st.sidebar.checkbox("✅ Deribit", value=True)
+use_binance = st.sidebar.checkbox("Binance")
+use_bybit = st.sidebar.checkbox("Bybit")
+
+# Prepare fetch list dynamically
+data_frames = []
 st.subheader("🔄 Fetching Price Data")
 st.write("This may take a few seconds...")
 
-# Fetch prices from all 3 exchanges
-data_frames = []
-for source_name, fetch_fn in zip([
-    "Deribit", "Binance", "Bybit"
-], [fetch_deribit, fetch_binance, fetch_bybit] ):
+fetchers = []
+if use_deribit:
+    fetchers.append(("Deribit", fetch_deribit))
+if use_binance:
+    fetchers.append(("Binance", fetch_binance))
+if use_bybit:
+    fetchers.append(("Bybit", fetch_bybit))
+
+# Fetch data
+for source_name, fetch_fn in fetchers:
     try:
         df = fetch_fn(assets=assets)
         df['source'] = source_name
