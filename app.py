@@ -37,7 +37,7 @@ if use_bybit:
 for source_name, fetch_fn in fetchers:
     try:
         df = fetch_fn(assets=assets)
-        df['source'] = source_name
+        df['Exchange'] = source_name
         data_frames.append(df)
         st.success(f"✅ {source_name} fetched: {len(df)} rows")
     except Exception as e:
