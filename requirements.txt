@@ -4,4 +4,7 @@ numpy
 requests
 python-dotenv
 scipy
+matplotlib
+seaborn
+
 
