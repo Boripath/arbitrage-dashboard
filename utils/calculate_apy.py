@@ -24,7 +24,9 @@ def calculate_apy(df: pd.DataFrame) -> pd.DataFrame:
     df["days_to_expiry"] = df.apply(days_to_expiry, axis=1)
 
     # คำนวณ Spread และ APY
-    df["spread"] = df["future_price"] - df["spot_price"]
+    future_col = "future_price" if "future_price" in df.columns else "price"
+    df["spread"] = df[future_col] - df["spot_price"]
+    #df["spread"] = df["future_price"] - df["spot_price"]
     df["apy"] = (df["spread"] / df["spot_price"]) * (365 / df["days_to_expiry"])
 
     # Z-score ของ APY
