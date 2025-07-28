@@ -4,6 +4,8 @@ from fetch import fetch_deribit, fetch_binance, fetch_bybit
 from utils import calculate_apy
 from datetime import datetime
 import os
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Title
 st.title("📊 Crypto Arbitrage Dashboard: BTC & ETH")
@@ -67,10 +69,16 @@ if data_frames:
         st.dataframe(result_df[["Exchange", "asset", "type", "expiry", "days_to_expiry", "spread", "apy_daily", "apy_annual", "zscore"]])
     
     # Z-score bar chart
-    st.subheader("📊 Z-Score Distribution")
-    st.bar_chart(result_df.set_index("asset")["zscore"])
+    st.subheader("📊 Z-Score Distribution")   
+    for asset in result_df["asset"].unique():
+        fig, ax = plt.subplots()
+        sns.histplot(result_df[result_df["asset"] == asset]["zscore"], kde=True, bins=20, ax=ax)
+        ax.set_title(f"Z-Score Distribution: {asset}")
+        ax.set_xlabel("Z-Score")
+        ax.set_ylabel("Frequency")
+        st.pyplot(fig)    
+        # Export CSV
     
-    # Export CSV
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     os.makedirs("data", exist_ok=True)
     csv_path = f"data/arbitrage_{timestamp}.csv"
