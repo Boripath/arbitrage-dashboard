@@ -1,57 +1,50 @@
-# snapshot_runner.py
-
+# 📁 snapshot_runner.py
 import pandas as pd
-from datetime import datetime
-from fetch.fetch_deribit import fetch_deribit
-from fetch.fetch_binance import fetch_binance
-from fetch.fetch_bybit import fetch_bybit
+from fetch import fetch_deribit, fetch_binance, fetch_bybit
 from utils.calculate_apy import calculate_apy
 from storage.save_snapshot import save_snapshot
 from storage.upload_to_gdrive import upload_to_gdrive
+from datetime import datetime
+import os
 
-# ตั้งค่าเริ่มต้น
+# ✅ Settings
 ASSETS = ["BTC", "ETH"]
-EXCHANGES = {
+EXCHANGES = ["Deribit", "Binance", "Bybit"]  # You can modify this list
+SAVE_TO_GDRIVE = True  # Set to False if you want to skip Google Drive upload
+GDRIVE_FOLDER_ID = None  # Replace with your folder ID if needed
+
+# ✅ Step 1: Fetch all data
+all_data = []
+fetch_map = {
     "Deribit": fetch_deribit,
     "Binance": fetch_binance,
     "Bybit": fetch_bybit,
 }
-ENABLED_EXCHANGES = ["Deribit"]  # ✅ ดึงจาก Deribit เท่านั้นในเวอร์ชันแรก
 
-def main():
-    print("📡 Starting snapshot fetch...")
-    data_frames = []
+for ex in EXCHANGES:
+    try:
+        df = fetch_map[ex](assets=ASSETS)
+        df["Exchange"] = ex
+        all_data.append(df)
+        print(f"✅ Fetched from {ex}: {len(df)} rows")
+    except Exception as e:
+        print(f"❌ Failed to fetch from {ex}: {e}")
 
-    for name in ENABLED_EXCHANGES:
-        try:
-            fetch_func = EXCHANGES[name]
-            df = fetch_func(assets=ASSETS)
-            df["Exchange"] = name
-            data_frames.append(df)
-            print(f"✅ Fetched from {name}: {len(df)} rows")
-        except Exception as e:
-            print(f"❌ Failed to fetch from {name}: {e}")
+# ✅ Step 2: Combine and calculate APY
+if all_data:
+    df_all = pd.concat(all_data, ignore_index=True)
+    df_result = calculate_apy(df_all)
 
-    if not data_frames:
-        print("⚠️ No data fetched. Exiting.")
-        return
-
-    # รวมข้อมูลทั้งหมด
-    combined_df = pd.concat(data_frames, ignore_index=True)
-
-    # คำนวณ APY, Z-score, spread_per_day ฯลฯ
-    processed_df = calculate_apy(combined_df)
-
-    # บันทึกไฟล์ snapshot → .parquet
+    # ✅ Step 3: Save snapshot to local
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"arbitrage_snapshot_{timestamp}.parquet"
-    filepath = save_snapshot(processed_df, filename)
+    filename = f"snapshot_{timestamp}.parquet"
+    local_path = save_snapshot(df_result, filename)
 
-    # อัปโหลดไปยัง Google Drive
-    upload_to_gdrive(filepath, filename)
-
-    print(f"✅ Snapshot completed and uploaded: {filename}")
-
-if __name__ == "__main__":
-    main()
-
+    # ✅ Step 4: Upload to Google Drive
+    if SAVE_TO_GDRIVE:
+        try:
+            file_id = upload_to_gdrive(local_path, gdrive_folder_id=GDRIVE_FOLDER_ID)
+        except Exception as e:
+            print(f"⚠️ Google Drive upload failed: {e}")
+else:
+    print("⚠️ No data collected. Check API or settings.")
